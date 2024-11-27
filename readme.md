@@ -1,11 +1,4 @@
-# Courses and Objectives API
-
-An API to manage and retrieve course information and related learning objectives.
-
-## Prerequisites
-
-- **Python 3.7+**
-- **pip** (Python package manager)
+# ECTS Scraper and API
 
 ## Setup
 
