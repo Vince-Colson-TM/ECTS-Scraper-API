@@ -5,4 +5,4 @@ node_modules
 dist/js
 dist/css
 dist/fonts
-__pycache__
+__pycache__/
