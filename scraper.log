@@ -271,3 +271,98 @@
 2024-11-27 10:37:15,139 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
 2024-11-27 10:37:15,140 - INFO - Total rows found: 36
 2024-11-27 10:37:15,150 - INFO - Filtered 18 courses with Z-codes
+2024-11-27 15:00:32,446 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 15:00:32,448 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 15:00:32,455 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-27 15:00:32,459 - INFO - Total rows found under header 'Application Development': 24
+2024-11-27 15:00:32,463 - INFO - Total rows found under header 'Artificial Intelligence': 24
+2024-11-27 15:00:32,466 - INFO - Total courses scraped: 54
+2024-11-27 15:02:09,335 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 15:02:09,336 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 15:02:09,343 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-27 15:02:09,347 - INFO - Total rows found under header 'Application Development': 24
+2024-11-27 15:02:09,352 - INFO - Total rows found under header 'Artificial Intelligence': 24
+2024-11-27 15:02:09,354 - INFO - Total courses scraped: 54
+2024-11-27 15:03:05,273 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 15:03:05,274 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 15:03:05,280 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-27 15:03:05,284 - INFO - Total rows found under header 'Application Development': 24
+2024-11-27 15:03:05,289 - INFO - Total rows found under header 'Artificial Intelligence': 24
+2024-11-27 15:03:05,291 - INFO - Total courses scraped: 54
+2024-11-27 18:48:30,931 - ERROR - Failed to scrape courses: HTTPSConnectionPool(host='onderwijsaanbodkempen.thomasmore.be', port=443): Max retries exceeded with url: /2024/opleidingen/n/SC_51260641.htm (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x00000279855BE660>: Failed to resolve 'onderwijsaanbodkempen.thomasmore.be' ([Errno 11001] getaddrinfo failed)"))
+2024-11-27 18:48:56,569 - ERROR - Failed to scrape courses: HTTPSConnectionPool(host='onderwijsaanbodkempen.thomasmore.be', port=443): Max retries exceeded with url: /2024/opleidingen/n/SC_51260641.htm (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x00000153465B1970>: Failed to resolve 'onderwijsaanbodkempen.thomasmore.be' ([Errno 11001] getaddrinfo failed)"))
+2024-11-27 18:49:42,002 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 18:49:42,003 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 18:49:42,008 - INFO - Total courses scraped: 18
+2024-11-27 19:10:01,114 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 19:10:01,116 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 19:10:01,116 - ERROR - Failed to scrape courses: name 'fase_tds' is not defined
+2024-11-27 19:10:55,326 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 19:10:55,326 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 19:10:55,338 - ERROR - Failed to scrape courses: name 'phases' is not defined
+2024-11-27 19:11:38,948 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 19:11:38,949 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 19:11:38,953 - INFO - Total courses scraped: 18
+2024-11-27 19:12:36,865 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 19:12:36,866 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 19:12:36,877 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-27 19:12:36,882 - INFO - Total rows found under header 'Application Development': 24
+2024-11-27 19:12:36,887 - INFO - Total rows found under header 'Artificial Intelligence': 24
+2024-11-27 19:12:36,889 - INFO - Total courses scraped: 54
+2024-11-27 19:15:12,323 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-27 19:15:12,324 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-27 19:15:12,333 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-27 19:15:12,338 - INFO - Total rows found under header 'Application Development': 24
+2024-11-27 19:15:12,342 - INFO - Total rows found under header 'Artificial Intelligence': 24
+2024-11-27 19:15:12,344 - INFO - Total courses scraped: 54
+2024-11-28 15:39:23,192 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 15:39:23,195 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 15:39:23,207 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 15:39:23,217 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 15:39:23,225 - INFO - Total rows found under header 'Artificial Intelligence': 24
+2024-11-28 15:39:23,230 - INFO - Total courses scraped: 54
+2024-11-28 15:43:51,480 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 15:43:51,481 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 15:43:51,490 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 15:43:51,495 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 15:43:51,497 - INFO - Total courses scraped: 42
+2024-11-28 15:44:28,013 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 15:44:28,014 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 15:44:28,022 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 15:44:28,026 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 15:44:28,030 - INFO - Total courses scraped: 42
+2024-11-28 15:48:23,286 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 15:48:23,287 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 15:48:23,296 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 15:48:23,301 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 15:48:23,303 - INFO - Total courses scraped: 42
+2024-11-28 15:50:41,947 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 15:50:41,947 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 15:50:41,955 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 15:50:41,959 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 15:50:41,963 - INFO - Total courses scraped: 42
+2024-11-28 15:55:40,449 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 15:55:40,450 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 15:55:40,457 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 15:55:40,462 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 15:55:40,464 - INFO - Total courses scraped: 42
+2024-11-28 16:21:22,267 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 16:21:22,267 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 16:21:22,280 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 16:21:22,288 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 16:21:22,292 - INFO - Total courses scraped: 42
+2024-11-28 16:25:05,632 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 16:25:05,633 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 16:25:05,650 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 16:25:05,657 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 16:25:05,664 - INFO - Total courses scraped: 42
+2024-11-28 16:27:00,544 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 16:27:00,546 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 16:27:00,555 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 16:27:00,562 - INFO - Total rows found under header 'Application Development': 24
+2024-11-28 16:27:00,566 - INFO - Total courses scraped: 42
+2024-11-28 16:37:25,875 - INFO - Fetched HTML content from https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm
+2024-11-28 16:37:25,875 - INFO - Total rows found under header 'Verplichte opleidingsonderdelen': 36
+2024-11-28 16:37:25,884 - INFO - Total rows found under header 'Artificial Intelligence / Application Development': 24
+2024-11-28 16:37:25,893 - INFO - Total rows found under header 'Application Development': 14
+2024-11-28 16:37:25,895 - INFO - Total courses scraped: 37

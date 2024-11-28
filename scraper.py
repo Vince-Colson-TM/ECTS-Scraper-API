@@ -7,10 +7,9 @@ import logging
 import re
 
 # TODO - Change naming to be more accurate across the codebase
-# TODO - Add more comments to explain the code
 # TODO - Remove redundant code and functions
-# TODO - Get credits and semester from overview page
-# TODO - Get learning contents and evaluation methods from detail course page
+# TODO - Get credits from overview page
+# TODO - Get evaluation methods from detail course page
 
 # Set up logging
 logging.basicConfig(filename='scraper.log', level=logging.INFO,
@@ -20,7 +19,15 @@ logging.basicConfig(filename='scraper.log', level=logging.INFO,
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 # URL of the overview page where Z-codes are listed
-overview_url = "https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm"
+url = "https://onderwijsaanbodkempen.thomasmore.be/2024/opleidingen/n/SC_51260641.htm"
+
+# Headers that contain the courses to scrape from the overview page
+headers = [
+    'Verplichte opleidingsonderdelen',
+    'Artificial Intelligence / Application Development',
+    'Application Development',
+    # 'Artificial Intelligence',
+]
 
 # Phrases to remove from the start of learning objectives
 start_phrases = ['de student', 'je', 'you']
@@ -66,40 +73,50 @@ def clean_text(text):
     return cleaned_text
 
 
-def scrape_z_codes(overview_url):
+def scrape_courses(overview_url, headers_to_scrape):
+    """
+    Scrape course data for specified headers from the provided overview URL.
+
+    Args:
+        overview_url (str): URL of the overview page.
+        headers_to_scrape (list): List of headers to scrape, e.g., ['Verplichte opleidingsonderdelen'].
+
+    Returns:
+        list: A list of dictionaries containing scraped course data.
+    """
     try:
         response = requests.get(overview_url, verify=False)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
         logging.info(f"Fetched HTML content from {overview_url}")
+        all_courses = []
 
-        header = soup.find(lambda tag: tag.name == 'h3' and 'Verplichte opleidingsonderdelen' in tag.get_text())
-        if not header:
-            logging.warning("Could not find 'Verplichte opleidingsonderdelen' header")
-            return []
-
-        parent_li = header.find_parent('li')
-        if not parent_li:
-            logging.warning("Could not find parent <li> of the header")
-            return []
-
-        filtered_courses = []
-
-        rows = parent_li.find_all('tr')
-        logging.info(f"Total rows found: {len(rows)}")
-
-        for index, row in enumerate(rows, 1):
-            if is_element_hidden(row):
+        for header_text in headers_to_scrape:
+            header = soup.find(lambda tag: tag.name == 'h3' and header_text == tag.get_text().strip())
+            if not header:
+                logging.warning(f"Could not find header: {header_text}")
                 continue
 
-            # Extract Z-code
-            z_code_element = row.find('td', class_='code')
-            if z_code_element:
-                z_code = z_code_element.get_text().strip()
+            parent_li = header.find_parent('li')
+            if not parent_li:
+                logging.warning(f"Could not find parent <li> for header: {header_text}")
+                continue
 
-                course_name_td = row.find('td', class_='opleidingsonderdeel')  # Assuming there is a title column
-                course_name = course_name_td.get_text(strip=True) if course_name_td else ""
+            rows = parent_li.find_all('tr')
+            logging.info(f"Total rows found under header '{header_text}': {len(rows)}")
+
+            for index, row in enumerate(rows, 1):
+                if is_element_hidden(row):
+                    continue
+
+                # Extract Z-code
+                z_code_element = row.find('td', class_='code')
+                z_code = z_code_element.get_text().strip() if z_code_element else None
+
+                # Extract Course Name
+                course_name_td = row.find('td', class_='opleidingsonderdeel')
+                course_name = course_name_td.get_text(strip=True) if course_name_td else None
 
                 # Assuming `row` is the <tr> element containing all <td> elements
                 fase_tds = row.find_all('td', class_='fase')  # Get all td elements with class 'fase'
@@ -128,37 +145,33 @@ def scrape_z_codes(overview_url):
                     else:
                         print("No img tag or src attribute found in this fase_td")  # Debugging line
 
-                # Get the course semester (1,2 or 3 for both)
+                # Extract Semester
+                semester_number = None
                 semester_td = row.find('td', class_='sem')
-                sem_img_tag = semester_td.find('img')
-                if sem_img_tag and 'src' in sem_img_tag.attrs:
-                    img_src = sem_img_tag['src']
-                    semester_match = re.search(r'icon-semester-(\d+)\.png', img_src)
+                if semester_td:
+                    sem_img_tag = semester_td.find('img')
+                    if sem_img_tag and 'src' in sem_img_tag.attrs:
+                        semester_match = re.search(r'icon-semester-(\d+)\.png', sem_img_tag['src'])
+                        if semester_match:
+                            semester_number = int(semester_match.group(1))
 
-                    # Check if a match is found and extract the value
-                    if semester_match:
-                        semester_number = semester_match.group(1)
-                        print(semester_number)  # This will print 1 for the example above
-                    else:
-                        print("No match found.")
+                if z_code:
+                    all_courses.append({
+                        "z_code": z_code,
+                        "course_name": course_name,
+                        "phase": phase,
+                        "phase_is_mandatory": phase_is_mandatory,
+                        "semester": semester_number,
+                    })
 
-                # Append to the filtered courses list
-                filtered_courses.append({
-                    "z_code": z_code,
-                    "course_name": course_name,
-                    "phase": phase,
-                    "phase_is_mandatory": phase_is_mandatory,
-                    "semester": semester_number,
-                })
+                    logging.debug(
+                        f"Scraped Z-code: {z_code}, Course: {course_name}, Phase: {phase}, Semester: {semester_number}")
 
-                logging.debug(
-                    f"  Found Z-code: {z_code}, Course Name: {course_name}, Phase: {phase}, Mandatory: {phase_is_mandatory}")
-
-        logging.info(f"Filtered {len(filtered_courses)} courses with Z-codes")
-        return filtered_courses
+        logging.info(f"Total courses scraped: {len(all_courses)}")
+        return all_courses
 
     except Exception as e:
-        logging.error(f"Failed to scrape Z-codes and phases: {e}")
+        logging.error(f"Failed to scrape courses: {e}")
         return []
 
 
@@ -243,28 +256,97 @@ def fetch_with_suffixes(z_code):
 
 
 # Main function to scrape courses
-def scrape_courses(course_data):  # Now takes in the course data directly
-    # Remove the loop that fetched z_codes again
+# def scrape_courses_data(course_data):  # Now takes in the course data directly
+#     # Remove the loop that fetched z_codes again
+#     for course in course_data:
+#         z_code = course['z_code']
+#         soup, final_url = fetch_with_suffixes(z_code)
+#
+#         if soup:
+#             try:
+#                 # No need to extract course_name again; it comes from course_data
+#                 objectives_div = soup.find(id=lambda x: x and x.startswith("tab_doelstellingen_idp"))
+#
+#                 objectives = set()
+#
+#                 if objectives_div:
+#                     # Extract objectives from <ul><li> elements
+#                     list_items = objectives_div.find_all('li')
+#                     for li in list_items:
+#                         objective_text = li.get_text().strip().replace('\xa0', ' ')
+#                         if objective_text and is_valid_objective(objective_text):
+#                             objectives.add(objective_text)
+#
+#                     # Extract objectives from <p> elements
+#                     paragraphs = objectives_div.find_all('p')
+#                     for p in paragraphs:
+#                         full_text = p.get_text(separator='<br>').strip()
+#                         split_objectives = full_text.split('<br>')
+#                         for obj in split_objectives:
+#                             normalized_obj = obj.strip().replace('\xa0', ' ')
+#                             cleaned_obj = clean_text(normalized_obj)
+#
+#                             if cleaned_obj and is_valid_objective(cleaned_obj):
+#                                 objectives.add(cleaned_obj)
+#
+#                 cleaned_objectives = clean_and_join_objectives(list(objectives))
+#
+#                 # Find the tag with id starting with 'tab_inhoud_idp'
+#                 contents_div = soup.find(id=lambda x: x and x.startswith("tab_inhoud_idp"))
+#
+#                 # Proceed only if such a tag exists
+#                 if contents_div:
+#                     # Remove tags with class 'print_only'
+#                     for tag in contents_div.find_all(class_='print_only'):
+#                         tag.decompose()
+#
+#                     # Remove all attributes from the div
+#                     contents_div.attrs.clear()
+#
+#                     # Output cleaned HTML
+#                     cleaned_contents = str(contents_div)
+#
+#                     print(cleaned_contents)
+#                 else:
+#                     print("No tag found with ID starting with 'tab_inhoud_idp'")
+#
+#                 # Append the course data including objectives
+#                 course.update({
+#                     "objectives": cleaned_objectives,
+#                     "learning_contents": cleaned_contents
+#                 })
+#                 print(f"Successfully scraped course: {course['course_name']} from {final_url}")
+#
+#             except Exception as e:
+#                 print(f"Failed to process data for {z_code}: {e}")
+#         else:
+#             print(f"Failed to retrieve page for Z-code {z_code}.")
+#
+#     return course_data
+
+
+def scrape_courses_data(course_data):
     for course in course_data:
         z_code = course['z_code']
         soup, final_url = fetch_with_suffixes(z_code)
 
+        # Default values to ensure all keys exist
+        course['objectives'] = []
+        course['learning_contents'] = ''
+
         if soup:
             try:
-                # No need to extract course_name again; it comes from course_data
+                # Objectives extraction (same as original)
                 objectives_div = soup.find(id=lambda x: x and x.startswith("tab_doelstellingen_idp"))
-
                 objectives = set()
 
                 if objectives_div:
-                    # Extract objectives from <ul><li> elements
                     list_items = objectives_div.find_all('li')
                     for li in list_items:
                         objective_text = li.get_text().strip().replace('\xa0', ' ')
                         if objective_text and is_valid_objective(objective_text):
                             objectives.add(objective_text)
 
-                    # Extract objectives from <p> elements
                     paragraphs = objectives_div.find_all('p')
                     for p in paragraphs:
                         full_text = p.get_text(separator='<br>').strip()
@@ -277,31 +359,34 @@ def scrape_courses(course_data):  # Now takes in the course data directly
                                 objectives.add(cleaned_obj)
 
                 cleaned_objectives = clean_and_join_objectives(list(objectives))
+                course['objectives'] = cleaned_objectives
 
-                # Find the tag with id starting with 'tab_inhoud_idp'
-                contents_div = soup.find(id=lambda x: x and x.startswith("tab_inhoud_idp"))
+                # Find all divs that match the content pattern
+                contents_divs = soup.find_all('div',
+                    id=lambda x: x and x.startswith('tab_inhoud_') and x.endswith('_content'))
 
-                # Proceed only if such a tag exists
-                if contents_div:
-                    # Remove tags with class 'print_only'
-                    for tag in contents_div.find_all(class_='print_only'):
-                        tag.decompose()
+                if contents_divs:
+                    # Collect contents from all matching divs
+                    all_contents = []
+                    for contents_div in contents_divs:
+                        # Remove print-only tags
+                        for tag in contents_div.find_all(class_='print_only'):
+                            tag.decompose()
 
-                    # Remove all attributes from the div
-                    contents_div.attrs.clear()
+                        # Preserve some attributes
+                        allowed_attrs = ['id', 'class']
+                        for attr in list(contents_div.attrs.keys()):
+                            if attr not in allowed_attrs:
+                                del contents_div.attrs[attr]
 
-                    # Output cleaned HTML
-                    cleaned_contents = str(contents_div)
+                        # Convert to string, preserving HTML structure
+                        cleaned_contents = str(contents_div)
+                        if cleaned_contents.strip():
+                            all_contents.append(cleaned_contents)
 
-                    print(cleaned_contents)
-                else:
-                    print("No tag found with ID starting with 'tab_inhoud_idp'")
+                    # Join multiple content divs
+                    course['learning_contents'] = '\n'.join(all_contents)
 
-                # Append the course data including objectives
-                course.update({
-                    "objectives": cleaned_objectives,
-                    "learning_contents": cleaned_contents
-                })
                 print(f"Successfully scraped course: {course['course_name']} from {final_url}")
 
             except Exception as e:
@@ -355,6 +440,7 @@ def setup_database():
 
     return conn, cursor
 
+
 # def insert_fake_connections(conn, cursor):
 #     # Fetch existing Z-codes from the courses table
 #     cursor.execute("SELECT z_code FROM courses")
@@ -386,14 +472,18 @@ def setup_database():
 # Function to insert data into the database
 def insert_data(conn, cursor, course_data):
     for course in course_data:
-        cursor.execute('''INSERT OR REPLACE INTO courses (z_code, course_name, phase, phase_is_mandatory, semester, learning_contents)
-                          VALUES (?, ?, ?, ?, ?, ?)''',
-                       (course['z_code'], course['course_name'], course['phase'], course['phase_is_mandatory'],
-                        course['semester'],
-                        course['learning_contents']))
+        cursor.execute('''INSERT OR REPLACE INTO courses (z_code, course_name, phase, phase_is_mandatory, semester, 
+        learning_contents) VALUES (?, ?, ?, ?, ?, ?)''',
+                       (course['z_code'],
+                        course['course_name'],
+                        course.get('phase'),
+                        course.get('phase_is_mandatory'),
+                        course.get('semester'),
+                        course.get('learning_contents') or ''))
         print(f"Inserted data for course: {course['course_name']}")
 
-        for objective in course['objectives']:
+        objectives = course.get('objectives', [])
+        for objective in objectives:
             if objective:
                 cursor.execute('''INSERT INTO objectives (course_z_code, objective_text)
                                   VALUES (?, ?)''',
@@ -406,14 +496,14 @@ def insert_data(conn, cursor, course_data):
 # Main execution function
 def main():
     # Scrape Z-codes from the overview page
-    z_codes = scrape_z_codes(overview_url)
+    courses = scrape_courses(url, headers)
 
     # Check if Z-codes were successfully scraped
-    if z_codes:
-        print(f"Scraped {len(z_codes)} Z-codes.")
+    if courses:
+        print(f"Scraped {len(courses)} courses from overview.")
 
         # Scrape course data
-        course_data = scrape_courses(z_codes)
+        course_data = scrape_courses_data(courses)
 
         # Set up the database
         conn, cursor = setup_database()
