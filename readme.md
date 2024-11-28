@@ -14,7 +14,7 @@
 pip install -r requirements.txt
 ```
 
-3. Optional: Run the scraper to repopulate the database with updated course information:
+3. Run the scraper to (re)populate the database with current ECTS content:
 
 ```bash
 python scraper.py
