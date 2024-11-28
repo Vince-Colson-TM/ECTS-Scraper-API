@@ -6,3 +6,7 @@ dist/js
 dist/css
 dist/fonts
 __pycache__/
+*.sqlite
+*.sqlite3
+*.log
+*.db
