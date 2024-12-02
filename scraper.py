@@ -335,6 +335,7 @@ def setup_database():
     # Drop tables if they exist to start fresh
     cursor.execute('DROP TABLE IF EXISTS objectives')
     cursor.execute('DROP TABLE IF EXISTS courses')
+    cursor.execute('DROP TABLE IF EXISTS course_connections')
 
     # Create tables for storing course and objectives data
     cursor.execute('''
@@ -361,43 +362,32 @@ def setup_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS course_connections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            course_z_code TEXT,
-            related_course_z_code TEXT,
-            FOREIGN KEY (course_z_code) REFERENCES courses(z_code)
-            FOREIGN KEY (related_course_z_code) REFERENCES courses(z_code)
+            z_code_1 TEXT,
+            z_code_2 TEXT,
+            FOREIGN KEY (z_code_1) REFERENCES courses(z_code)
+            FOREIGN KEY (z_code_2) REFERENCES courses(z_code)
         )
         ''')
+    
 
     return conn, cursor
 
 
-# def insert_fake_connections(conn, cursor):
-#     # Fetch existing Z-codes from the courses table
-#     cursor.execute("SELECT z_code FROM courses")
-#     z_codes = [row[0] for row in cursor.fetchall()]
-#
-#     # Ensure there are enough Z-codes to create connections
-#     if len(z_codes) > 1:
-#         # Generate random connections
-#         connections = []
-#         for _ in range(min(10, len(z_codes) - 1)):  # Create up to 10 connections, or fewer if limited Z-codes
-#             course_z_code = random.choice(z_codes)
-#             next_course_z_code = random.choice([z for z in z_codes if z != course_z_code])
-#             connections.append((course_z_code, next_course_z_code))
-#
-#         # Insert connections into the course_connections table
-#         cursor.executemany(
-#             '''
-#             INSERT INTO course_connections (course_z_code, next_course_z_code)
-#             VALUES (?, ?)
-#             ''', connections
-#         )
-#
-#         # Commit the transaction
-#         conn.commit()
-#         print("Fake connections added successfully!")
-#     else:
-#         print("Not enough Z-codes to create connections.")
+def insert_manual_connections(conn, cursor):
+    # Define default data to insert
+    default_connections = [
+        ("Z25499", "Z26279"),
+        ("Z26279", "Z26694"),
+        ("Z26694", "Z16461"),
+    ]
+
+    # Insert data into the table
+    cursor.executemany('''
+        INSERT INTO course_connections (z_code_1, z_code_2)
+        VALUES (?, ?)
+    ''', default_connections)
+    
+    conn.commit()
 
 # Function to insert data into the database
 def insert_data(conn, cursor, course_data):
@@ -442,7 +432,7 @@ def main():
         insert_data(conn, cursor, course_data)
 
         # Insert fake connections for testing
-        # insert_fake_connections(conn, cursor)
+        insert_manual_connections(conn, cursor)
 
         # Close the database connection
         conn.close()

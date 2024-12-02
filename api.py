@@ -56,7 +56,7 @@ def get_connections():
     cursor = connection.cursor()
 
     # Fetch all courses
-    cursor.execute("SELECT * FROM connections")
+    cursor.execute("SELECT * FROM course_connections")
     connections = cursor.fetchall()
     
      # Convert each row to a dictionary
