@@ -374,11 +374,26 @@ def setup_database():
 
 
 def insert_manual_connections(conn, cursor):
-    # Define default data to insert
+    # Define default data to insert (ChatGPT based now!)
     default_connections = [
-        ("Z25499", "Z26279"),
-        ("Z26279", "Z26694"),
-        ("Z26694", "Z16461"),
+    ("Z25499", "Z26279"),  # Programming Essentials -> OO Development
+    ("Z26279", "Z26694"),  # OO Development -> Web Development
+    ("Z26694", "Z16461"),  # Web Development -> .NET Development
+    ("Z26280", "Z16452"),  # Data Essentials -> Data Science
+    ("Z26281", "Z26695"),  # Full Stack Essentials -> Java Development
+    ("Z26285", "Z26698"),  # Cloud & DevOps -> Business Processes & ITIL
+    ("Z25500", "Z25516"),  # Webdesign Essentials -> Angular
+    ("Z26277", "Z16447"),  # Network Essentials -> Security Essentials
+    ("Z26691", "Z26690"),  # Software Modeling and Design -> The Digital Startup
+    ("Z26282", "Z26666"),  # Communication Skills 1 -> Communication Skills 2
+    ("Z26666", "Z13980"),  # Communication Skills 2 -> Professional Skills 3
+    ("Z25514", "Z16452"),  # Data Visualization -> Data Science
+    ("Z16449", "Z13983"),  # Stage (Semester 1) -> Stage (Semester 2)
+    ("Z16450", "Z13984"),  # Bachelorproef (Semester 1) -> Bachelorproef (Semester 2)
+    ("Z26701", "Z25516"),  # AR & Mobile Development -> Angular
+    ("Z26703", "Z13987"),  # .NET Advanced -> React
+    ("Z13981", "Z13980"),  # Project 4.0 -> Professional Skills 3
+    ("Z26695", "Z25515"),  # Java Development -> Advanced Programming Topics
     ]
 
     # Insert data into the table
