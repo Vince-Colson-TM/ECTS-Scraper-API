@@ -336,6 +336,7 @@ def setup_database():
     # Drop tables if they exist to start fresh
     cursor.execute('DROP TABLE IF EXISTS objectives')
     cursor.execute('DROP TABLE IF EXISTS courses')
+    cursor.execute('DROP TABLE IF EXISTS course_connections')
 
     # Create tables for storing course and objectives data
     cursor.execute('''
@@ -362,10 +363,10 @@ def setup_database():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS course_connections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            course_z_code TEXT,
-            related_course_z_code TEXT,
-            FOREIGN KEY (course_z_code) REFERENCES courses(z_code)
-            FOREIGN KEY (related_course_z_code) REFERENCES courses(z_code)
+            z_code_1 TEXT,
+            z_code_2 TEXT,
+            FOREIGN KEY (z_code_1) REFERENCES courses(z_code)
+            FOREIGN KEY (z_code_2) REFERENCES courses(z_code)
         )
         ''')
 
@@ -412,6 +413,38 @@ def insert_fake_connections(conn, cursor):
     else:
         print("No valid connections could be created.")
 
+
+def insert_manual_connections(conn, cursor):
+    # Define default data to insert (ChatGPT based now!)
+    default_connections = [
+    ("Z25499", "Z26279"),  # Programming Essentials -> OO Development
+    ("Z26279", "Z26694"),  # OO Development -> Web Development
+    ("Z26694", "Z16461"),  # Web Development -> .NET Development
+    ("Z26280", "Z16452"),  # Data Essentials -> Data Science
+    ("Z26281", "Z26695"),  # Full Stack Essentials -> Java Development
+    ("Z26285", "Z26698"),  # Cloud & DevOps -> Business Processes & ITIL
+    ("Z25500", "Z25516"),  # Webdesign Essentials -> Angular
+    ("Z26277", "Z16447"),  # Network Essentials -> Security Essentials
+    ("Z26691", "Z26690"),  # Software Modeling and Design -> The Digital Startup
+    ("Z26282", "Z26666"),  # Communication Skills 1 -> Communication Skills 2
+    ("Z26666", "Z13980"),  # Communication Skills 2 -> Professional Skills 3
+    ("Z25514", "Z16452"),  # Data Visualization -> Data Science
+    ("Z16449", "Z13983"),  # Stage (Semester 1) -> Stage (Semester 2)
+    ("Z16450", "Z13984"),  # Bachelorproef (Semester 1) -> Bachelorproef (Semester 2)
+    ("Z26701", "Z25516"),  # AR & Mobile Development -> Angular
+    ("Z26703", "Z13987"),  # .NET Advanced -> React
+    ("Z13981", "Z13980"),  # Project 4.0 -> Professional Skills 3
+    ("Z26695", "Z25515"),  # Java Development -> Advanced Programming Topics
+    ]
+
+    # Insert data into the table
+    cursor.executemany('''
+        INSERT INTO course_connections (z_code_1, z_code_2)
+        VALUES (?, ?)
+    ''', default_connections)
+
+    conn.commit()
+
 # Function to insert data into the database
 def insert_data(conn, cursor, course_data):
     for course in course_data:
@@ -454,7 +487,10 @@ def main():
         # Insert the scraped data into the database
         insert_data(conn, cursor, course_data)
 
-        # Insert fake connections for testing
+        # Insert manual connections
+        insert_manual_connections(conn, cursor)
+
+        # Insert manual connections for testing, uncomment when needed
         # insert_fake_connections(conn, cursor)
 
         # Close the database connection

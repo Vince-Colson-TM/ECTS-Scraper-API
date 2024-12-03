@@ -49,6 +49,21 @@ def get_courses_with_objectives():
     connection.close()
     return courses_with_objectives
 
+# Function to fetch connections
+def get_connections():
+    connection = sqlite3.connect("courses.db")
+    connection.row_factory = sqlite3.Row  # Access rows as dictionaries
+    cursor = connection.cursor()
+
+    # Fetch all courses
+    cursor.execute("SELECT * FROM course_connections")
+    connections = cursor.fetchall()
+    
+     # Convert each row to a dictionary
+    connections_list = [dict(row) for row in connections]
+
+    connection.close()
+    return connections_list
 
 
 @app.get("/courses")
@@ -56,5 +71,13 @@ async def get_all_courses():
     try:
         courses = get_courses_with_objectives()
         return JSONResponse(content=courses, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+    
+@app.get("/connections")
+async def get_all_connections():
+    try:
+        connections = get_connections()
+        return JSONResponse(content=connections, status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
