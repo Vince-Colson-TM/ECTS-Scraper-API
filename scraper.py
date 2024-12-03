@@ -373,6 +373,8 @@ def setup_database():
 
 
 def insert_fake_connections(conn, cursor):
+    #TODO - Add logic for semester-based connections
+
     # Fetch existing courses with their Z-codes and phases
     cursor.execute("SELECT z_code, phase FROM courses")
     courses = cursor.fetchall()
@@ -453,7 +455,7 @@ def main():
         insert_data(conn, cursor, course_data)
 
         # Insert fake connections for testing
-        insert_fake_connections(conn, cursor)
+        # insert_fake_connections(conn, cursor)
 
         # Close the database connection
         conn.close()
