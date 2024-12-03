@@ -5,6 +5,7 @@ import sqlite3
 import warnings
 import logging
 import re
+import random
 
 # TODO - Change naming to be more accurate across the codebase
 # TODO - Remove redundant code and functions
@@ -371,33 +372,43 @@ def setup_database():
     return conn, cursor
 
 
-# def insert_fake_connections(conn, cursor):
-#     # Fetch existing Z-codes from the courses table
-#     cursor.execute("SELECT z_code FROM courses")
-#     z_codes = [row[0] for row in cursor.fetchall()]
-#
-#     # Ensure there are enough Z-codes to create connections
-#     if len(z_codes) > 1:
-#         # Generate random connections
-#         connections = []
-#         for _ in range(min(10, len(z_codes) - 1)):  # Create up to 10 connections, or fewer if limited Z-codes
-#             course_z_code = random.choice(z_codes)
-#             next_course_z_code = random.choice([z for z in z_codes if z != course_z_code])
-#             connections.append((course_z_code, next_course_z_code))
-#
-#         # Insert connections into the course_connections table
-#         cursor.executemany(
-#             '''
-#             INSERT INTO course_connections (course_z_code, next_course_z_code)
-#             VALUES (?, ?)
-#             ''', connections
-#         )
-#
-#         # Commit the transaction
-#         conn.commit()
-#         print("Fake connections added successfully!")
-#     else:
-#         print("Not enough Z-codes to create connections.")
+def insert_fake_connections(conn, cursor):
+    # Fetch existing courses with their Z-codes and phases
+    cursor.execute("SELECT z_code, phase FROM courses")
+    courses = cursor.fetchall()
+
+    # Generate connections between courses with strictly consecutive phases
+    connections = []
+    for current_z_code, current_phase in courses:
+        # Only connect to courses exactly one phase higher
+        if current_phase < 3:
+            next_courses = [
+                z_code for z_code, phase in courses
+                if phase == current_phase + 1
+            ]
+
+            # If there are next courses available, create a connection
+            if next_courses:
+                next_course_z_code = random.choice(next_courses)
+                connections.append((current_z_code, next_course_z_code))
+
+    # Empty the course_connections table
+    cursor.execute("DELETE FROM course_connections")
+
+    # Insert connections into the course_connections table
+    if connections:
+        cursor.executemany(
+            '''
+            INSERT INTO course_connections (course_z_code, next_course_z_code)
+            VALUES (?, ?)
+            ''', connections
+        )
+
+        # Commit the transaction
+        conn.commit()
+        print(f"Fake connections added successfully! Total connections: {len(connections)}")
+    else:
+        print("No valid connections could be created.")
 
 # Function to insert data into the database
 def insert_data(conn, cursor, course_data):
@@ -442,7 +453,7 @@ def main():
         insert_data(conn, cursor, course_data)
 
         # Insert fake connections for testing
-        # insert_fake_connections(conn, cursor)
+        insert_fake_connections(conn, cursor)
 
         # Close the database connection
         conn.close()
