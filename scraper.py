@@ -294,7 +294,7 @@ def scrape_courses_data(course_data):
 
                 # Find all divs that match the content pattern
                 contents_divs = soup.find_all('div',
-                    id=lambda x: x and x.startswith('tab_inhoud_') and x.endswith('_content'))
+                                              id=lambda x: x and x.startswith('tab_inhoud_') and x.endswith('_content'))
 
                 if contents_divs:
                     # Collect contents from all matching divs
@@ -337,6 +337,23 @@ def setup_database():
     cursor.execute('DROP TABLE IF EXISTS objectives')
     cursor.execute('DROP TABLE IF EXISTS courses')
     cursor.execute('DROP TABLE IF EXISTS course_connections')
+    cursor.execute('DROP TABLE IF EXISTS learning_tracks')
+
+    # Create learning_tracks table
+    cursor.execute('''
+                CREATE TABLE IF NOT EXISTS learning_tracks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT
+                    )
+            ''')
+
+    # Create tags table
+    cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS tags (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT
+                        )
+                ''')
 
     # Create tables for storing course and objectives data
     cursor.execute('''
@@ -347,7 +364,9 @@ def setup_database():
         phase_is_mandatory BOOLEAN,
         semester INTEGER,
         learning_contents TEXT,
-        UNIQUE(z_code, course_name)
+        learning_track_id INTEGER,
+        UNIQUE(z_code, course_name),
+        FOREIGN KEY (learning_track_id) REFERENCES learning_tracks(id)
     )
     ''')
 
@@ -365,16 +384,26 @@ def setup_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             z_code_1 TEXT,
             z_code_2 TEXT,
-            FOREIGN KEY (z_code_1) REFERENCES courses(z_code)
+            FOREIGN KEY (z_code_1) REFERENCES courses(z_code),
             FOREIGN KEY (z_code_2) REFERENCES courses(z_code)
         )
         ''')
+
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS course_tag (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_z_code INTEGER,
+                tag_id INTEGER,
+                FOREIGN KEY (course_z_code) REFERENCES courses(z_code),
+                FOREIGN KEY (tag_id) REFERENCES tags(id)
+            )
+            ''')
 
     return conn, cursor
 
 
 def insert_fake_connections(conn, cursor):
-    #TODO - Add logic for semester-based connections
+    # TODO - Add logic for semester-based connections
 
     # Fetch existing courses with their Z-codes and phases
     cursor.execute("SELECT z_code, phase FROM courses")
@@ -417,24 +446,24 @@ def insert_fake_connections(conn, cursor):
 def insert_manual_connections(conn, cursor):
     # Define default data to insert (ChatGPT based now!)
     default_connections = [
-    ("Z25499", "Z26279"),  # Programming Essentials -> OO Development
-    ("Z26279", "Z26694"),  # OO Development -> Web Development
-    ("Z26694", "Z16461"),  # Web Development -> .NET Development
-    ("Z26280", "Z16452"),  # Data Essentials -> Data Science
-    ("Z26281", "Z26695"),  # Full Stack Essentials -> Java Development
-    ("Z26285", "Z26698"),  # Cloud & DevOps -> Business Processes & ITIL
-    ("Z25500", "Z25516"),  # Webdesign Essentials -> Angular
-    ("Z26277", "Z16447"),  # Network Essentials -> Security Essentials
-    ("Z26691", "Z26690"),  # Software Modeling and Design -> The Digital Startup
-    ("Z26282", "Z26666"),  # Communication Skills 1 -> Communication Skills 2
-    ("Z26666", "Z13980"),  # Communication Skills 2 -> Professional Skills 3
-    ("Z25514", "Z16452"),  # Data Visualization -> Data Science
-    ("Z16449", "Z13983"),  # Stage (Semester 1) -> Stage (Semester 2)
-    ("Z16450", "Z13984"),  # Bachelorproef (Semester 1) -> Bachelorproef (Semester 2)
-    ("Z26701", "Z25516"),  # AR & Mobile Development -> Angular
-    ("Z26703", "Z13987"),  # .NET Advanced -> React
-    ("Z13981", "Z13980"),  # Project 4.0 -> Professional Skills 3
-    ("Z26695", "Z25515"),  # Java Development -> Advanced Programming Topics
+        ("Z25499", "Z26279"),  # Programming Essentials -> OO Development
+        ("Z26279", "Z26694"),  # OO Development -> Web Development
+        ("Z26694", "Z16461"),  # Web Development -> .NET Development
+        ("Z26280", "Z16452"),  # Data Essentials -> Data Science
+        ("Z26281", "Z26695"),  # Full Stack Essentials -> Java Development
+        ("Z26285", "Z26698"),  # Cloud & DevOps -> Business Processes & ITIL
+        ("Z25500", "Z25516"),  # Webdesign Essentials -> Angular
+        ("Z26277", "Z16447"),  # Network Essentials -> Security Essentials
+        ("Z26691", "Z26690"),  # Software Modeling and Design -> The Digital Startup
+        ("Z26282", "Z26666"),  # Communication Skills 1 -> Communication Skills 2
+        ("Z26666", "Z13980"),  # Communication Skills 2 -> Professional Skills 3
+        ("Z25514", "Z16452"),  # Data Visualization -> Data Science
+        ("Z16449", "Z13983"),  # Stage (Semester 1) -> Stage (Semester 2)
+        ("Z16450", "Z13984"),  # Bachelorproef (Semester 1) -> Bachelorproef (Semester 2)
+        ("Z26701", "Z25516"),  # AR & Mobile Development -> Angular
+        ("Z26703", "Z13987"),  # .NET Advanced -> React
+        ("Z13981", "Z13980"),  # Project 4.0 -> Professional Skills 3
+        ("Z26695", "Z25515"),  # Java Development -> Advanced Programming Topics
     ]
 
     # Insert data into the table
@@ -444,6 +473,57 @@ def insert_manual_connections(conn, cursor):
     ''', default_connections)
 
     conn.commit()
+
+
+def insert_learning_tracks(conn, cursor):
+    # Default learning tracks
+    default_learning_tracks = [
+        "Application Development",
+        "Artificial Intelligence",
+        "Digital Innovation",
+        "Cloud & Cybersecurity",
+    ]
+
+    # Transform to a list of tuples
+    formatted_tracks = [(track,) for track in default_learning_tracks]
+
+    # Insert data into the table
+    cursor.executemany('''
+        INSERT INTO learning_tracks (name)
+        VALUES (?)
+    ''', formatted_tracks)
+
+    conn.commit()
+
+
+
+def insert_tags(conn, cursor):
+    # Default tags
+    default_tags = [
+        "Web",
+        "App",
+        "Business",
+        "Cloud",
+        "Cybersecurity",
+        "AI",
+        "Data",
+        "Design",
+        "DevOps",
+        "Networking",
+        "Programming",
+    ]
+
+    # Transform to a list of tuples
+    formatted_tags = [(tag,) for tag in default_tags]
+
+    # Insert data into the table
+    cursor.executemany('''
+        INSERT INTO tags (name)
+        VALUES (?)
+    ''', formatted_tags)
+
+    conn.commit()
+
 
 # Function to insert data into the database
 def insert_data(conn, cursor, course_data):
@@ -483,6 +563,10 @@ def main():
 
         # Set up the database
         conn, cursor = setup_database()
+
+        # Insert learning tracks and tags
+        insert_learning_tracks(conn, cursor)
+        insert_tags(conn, cursor)
 
         # Insert the scraped data into the database
         insert_data(conn, cursor, course_data)
