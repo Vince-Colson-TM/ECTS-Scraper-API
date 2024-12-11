@@ -5,6 +5,7 @@ import sqlite3
 import warnings
 import logging
 import re
+import random
 
 # TODO - Change naming to be more accurate across the codebase
 # TODO - Remove redundant code and functions
@@ -293,7 +294,7 @@ def scrape_courses_data(course_data):
 
                 # Find all divs that match the content pattern
                 contents_divs = soup.find_all('div',
-                    id=lambda x: x and x.startswith('tab_inhoud_') and x.endswith('_content'))
+                                              id=lambda x: x and x.startswith('tab_inhoud_') and x.endswith('_content'))
 
                 if contents_divs:
                     # Collect contents from all matching divs
@@ -334,9 +335,25 @@ def setup_database():
 
     # Drop tables if they exist to start fresh
     cursor.execute('DROP TABLE IF EXISTS objectives')
-    cursor.execute('DROP TABLE IF EXISTS course_tags')
     cursor.execute('DROP TABLE IF EXISTS courses')
-    cursor.execute('DROP TABLE IF EXISTS tags')
+    cursor.execute('DROP TABLE IF EXISTS course_connections')
+    cursor.execute('DROP TABLE IF EXISTS learning_tracks')
+
+    # Create learning_tracks table
+    cursor.execute('''
+                CREATE TABLE IF NOT EXISTS learning_tracks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT
+                    )
+            ''')
+
+    # Create tags table
+    cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS tags (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT
+                        )
+                ''')
 
     # Create tables for storing course and objectives data
     cursor.execute('''
@@ -347,28 +364,9 @@ def setup_database():
         phase_is_mandatory BOOLEAN,
         semester INTEGER,
         learning_contents TEXT,
-        learning_path TEXT,
-        language TEXT
-        UNIQUE(z_code, course_name)
-    )
-    ''')
-    
-    # Table to store tags
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS tags (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tag_name TEXT NOT NULL UNIQUE
-    )
-    ''')
-
-    # Table to store many-to-many relationships between courses and tags
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS course_tags (
-    course_z_code TEXT NOT NULL,
-    tag_id INTEGER NOT NULL,
-    PRIMARY KEY (course_z_code, tag_id),
-    FOREIGN KEY (course_z_code) REFERENCES courses(z_code) ON DELETE CASCADE,
-    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+        learning_track_id INTEGER,
+        UNIQUE(z_code, course_name),
+        FOREIGN KEY (learning_track_id) REFERENCES learning_tracks(id)
     )
     ''')
 
@@ -379,9 +377,120 @@ def setup_database():
         objective_text TEXT,
         FOREIGN KEY (course_z_code) REFERENCES courses(z_code)
     )
-    ''')    
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS course_connections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            z_code_1 TEXT,
+            z_code_2 TEXT,
+            FOREIGN KEY (z_code_1) REFERENCES courses(z_code),
+            FOREIGN KEY (z_code_2) REFERENCES courses(z_code)
+        )
+        ''')
+
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS course_tag (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_z_code INTEGER,
+                tag_id INTEGER,
+                FOREIGN KEY (course_z_code) REFERENCES courses(z_code),
+                FOREIGN KEY (tag_id) REFERENCES tags(id)
+            )
+            ''')
 
     return conn, cursor
+
+
+def insert_fake_connections(conn, cursor):
+    # TODO - Add logic for semester-based connections
+
+    # Fetch existing courses with their Z-codes and phases
+    cursor.execute("SELECT z_code, phase FROM courses")
+    courses = cursor.fetchall()
+
+    # Generate connections between courses with strictly consecutive phases
+    connections = []
+    for current_z_code, current_phase in courses:
+        # Only connect to courses exactly one phase higher
+        if current_phase < 3:
+            next_courses = [
+                z_code for z_code, phase in courses
+                if phase == current_phase + 1
+            ]
+
+            # If there are next courses available, create a connection
+            if next_courses:
+                next_course_z_code = random.choice(next_courses)
+                connections.append((current_z_code, next_course_z_code))
+
+    # Empty the course_connections table
+    cursor.execute("DELETE FROM course_connections")
+
+    # Insert connections into the course_connections table
+    if connections:
+        cursor.executemany(
+            '''
+            INSERT INTO course_connections (course_z_code, next_course_z_code)
+            VALUES (?, ?)
+            ''', connections
+        )
+
+        # Commit the transaction
+        conn.commit()
+        print(f"Fake connections added successfully! Total connections: {len(connections)}")
+    else:
+        print("No valid connections could be created.")
+
+
+def insert_learning_tracks(conn, cursor):
+    # Default learning tracks
+    default_learning_tracks = [
+        "Application Development",
+        "Artificial Intelligence",
+        "Digital Innovation",
+        "Cloud & Cybersecurity",
+    ]
+
+    # Transform to a list of tuples
+    formatted_tracks = [(track,) for track in default_learning_tracks]
+
+    # Insert data into the table
+    cursor.executemany('''
+        INSERT INTO learning_tracks (name)
+        VALUES (?)
+    ''', formatted_tracks)
+
+    conn.commit()
+
+
+
+def insert_tags(conn, cursor):
+    # Default tags
+    default_tags = [
+        "Web",
+        "App",
+        "Business",
+        "Cloud",
+        "Cybersecurity",
+        "AI",
+        "Data",
+        "Design",
+        "DevOps",
+        "Networking",
+        "Programming",
+    ]
+
+    # Transform to a list of tuples
+    formatted_tags = [(tag,) for tag in default_tags]
+
+    # Insert data into the table
+    cursor.executemany('''
+        INSERT INTO tags (name)
+        VALUES (?)
+    ''', formatted_tags)
+
+    conn.commit()
 
 
 # Function to insert data into the database
@@ -423,8 +532,15 @@ def main():
         # Set up the database
         conn, cursor = setup_database()
 
+        # Insert learning tracks and tags
+        insert_learning_tracks(conn, cursor)
+        insert_tags(conn, cursor)
+
         # Insert the scraped data into the database
         insert_data(conn, cursor, course_data)
+
+        # Insert manual connections for testing, uncomment when needed
+        # insert_fake_connections(conn, cursor)
 
         # Close the database connection
         conn.close()
