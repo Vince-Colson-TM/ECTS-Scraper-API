@@ -25,7 +25,7 @@ def get_courses_with_objectives():
     cursor = connection.cursor()
 
     # Fetch all courses
-    cursor.execute("SELECT * FROM courses")
+    cursor.execute("SELECT * FROM courses ORDER BY phase_is_mandatory DESC")
     courses = cursor.fetchall()
 
     # Fetch objectives grouped by course_z_code
