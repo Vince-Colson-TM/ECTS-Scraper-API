@@ -150,7 +150,7 @@ def insert_course(course: Course):
             course.summaryEnglish, 
             course.z_code
         ))
-        course_id = course.z_code + "_pending"
+        course_id = existingduplicate_course["z_code"]
     else:
         # If no duplicate course with status PENDING exists, INSERT the new course
         cursor.execute("""
@@ -178,20 +178,18 @@ def insert_course(course: Course):
             original_course["language"],
             "PENDING"
         ))
-        course_id = cursor.lastrowid
+        course_id = original_course["z_code"] + "_pending"
 
+    # Delete objectives
+    cursor.execute("DELETE FROM objectives WHERE course_z_code = ?", (course_id,))
 
-    # # Insert objectives
-    # for obj in course.objectives:
-    #     cursor.execute("""
-    #         INSERT INTO course_objectives (course_id, lang, objective)
-    #         VALUES (?, 'nl', ?)
-    #     """, (course_id, obj.nl))
+    # Insert objectives
+    for obj in course.objectives:
+        cursor.execute("""
+            INSERT OR IGNORE INTO objectives (course_z_code, objective_text_nl, objective_text_en)
+            VALUES (?, ?, ?)
+        """, (course_id, obj.nl, obj.en))
 
-    #     cursor.execute("""
-    #         INSERT INTO course_objectives (course_id, lang, objective)
-    #         VALUES (?, 'en', ?)
-    #     """, (course_id, obj.en))
 
     # # Insert tags
     # for tag in course.tags:
