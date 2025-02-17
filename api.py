@@ -186,17 +186,29 @@ def insert_course(course: Course):
     # Insert objectives
     for obj in course.objectives:
         cursor.execute("""
-            INSERT OR IGNORE INTO objectives (course_z_code, objective_text_nl, objective_text_en)
+            INSERT INTO objectives (course_z_code, objective_text_nl, objective_text_en)
             VALUES (?, ?, ?)
         """, (course_id, obj.nl, obj.en))
 
+    # Delete tags
+    cursor.execute("DELETE FROM course_tag WHERE course_z_code = ?", (course_id,))
+    
+    # Insert tags
+    for tag_name in course.tags:
+        # Look up tag_id from the tags table
+        cursor.execute("SELECT id FROM tags WHERE name = ?", (tag_name,))
+        tag_row = cursor.fetchone()
 
-    # # Insert tags
-    # for tag in course.tags:
-    #     cursor.execute("""
-    #         INSERT INTO course_tags (course_id, tag)
-    #         VALUES (?, ?)
-    #     """, (course_id, tag))
+        if tag_row:
+            tag_id = tag_row["id"]
+
+            # Insert into course_tag table
+            cursor.execute("""
+                INSERT INTO course_tag (course_z_code, tag_id)
+                VALUES (?, ?)
+            """, (course_id, tag_id))
+        else:
+            print(f"Tag '{tag_name}' not found in database.")
 
     # Commit and close
     conn.commit()
