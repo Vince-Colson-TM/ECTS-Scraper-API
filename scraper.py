@@ -338,7 +338,23 @@ def setup_database():
     cursor.execute('DROP TABLE IF EXISTS courses')
     cursor.execute('DROP TABLE IF EXISTS course_connections')
     cursor.execute('DROP TABLE IF EXISTS learning_tracks')
+    cursor.execute('DROP TABLE IF EXISTS tags')
+    cursor.execute('DROP TABLE IF EXISTS profiles')
 
+  # Create profiles table
+    cursor.execute('''
+                CREATE TABLE IF NOT EXISTS profiles (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    img TEXT,
+                    route TEXT,
+                    title_nl TEXT,
+                    title_en TEXT,
+                    description_nl TEXT,
+                    description_en TEXT
+                    )
+            ''')
+    
     # Create learning_tracks table
     cursor.execute('''
                 CREATE TABLE IF NOT EXISTS learning_tracks (
@@ -349,11 +365,12 @@ def setup_database():
 
     # Create tags table
     cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS tags (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT
-                        )
-                ''')
+                CREATE TABLE IF NOT EXISTS tags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    hex_color TEXT
+                    )
+            ''')
 
     # Create tables for storing course and objectives data
     cursor.execute('''
@@ -363,8 +380,11 @@ def setup_database():
         phase INTEGER,
         phase_is_mandatory BOOLEAN,
         semester INTEGER,
-        learning_contents TEXT,
+        learning_contents_nl TEXT,
+        learning_contents_en TEXT,
         learning_track_id INTEGER,
+        programme TEXT,
+        language TEXT,
         UNIQUE(z_code, course_name),
         FOREIGN KEY (learning_track_id) REFERENCES learning_tracks(id)
     )
@@ -374,7 +394,8 @@ def setup_database():
     CREATE TABLE IF NOT EXISTS objectives (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         course_z_code TEXT,
-        objective_text TEXT,
+        objective_text_nl TEXT,
+        objective_text_en TEXT,
         FOREIGN KEY (course_z_code) REFERENCES courses(z_code)
     )
     ''')
