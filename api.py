@@ -2,11 +2,16 @@ from fastapi import FastAPI
 import sqlite3
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Optional
+
+from models.course import Course
 
 app = FastAPI()
 
 origins = [
     "http://localhost:4200",
+    "http://localhost:6694",
 ]
 
 app.add_middleware(
@@ -120,6 +125,85 @@ def get_profiles():
     profile.close()
     return profiles_list
 
+
+def insert_course(course: Course):
+    conn = sqlite3.connect("courses.db")
+    conn.row_factory = sqlite3.Row  # Access rows as dictionaries
+    cursor = conn.cursor()
+
+    # Check if course already exists
+    cursor.execute("SELECT * FROM courses WHERE z_code = ? AND status = 'APPROVED'", (course.z_code,))
+    original_course = cursor.fetchone()
+
+    
+    cursor.execute("SELECT * FROM courses WHERE z_code = ? AND status = 'PENDING'", (course.z_code,))
+    existingduplicate_course = cursor.fetchone()
+
+    if existingduplicate_course:
+        # If a duplicate course with status PENDING exists, UPDATE the course record
+        cursor.execute("""
+            UPDATE courses 
+            SET summary_nl = ?, summary_en = ?
+            WHERE z_code = ?
+        """, (
+            course.summary, 
+            course.summaryEnglish, 
+            course.z_code
+        ))
+        course_id = course.z_code + "_pending"
+    else:
+        # If no duplicate course with status PENDING exists, INSERT the new course
+        cursor.execute("""
+            INSERT INTO courses 
+            (z_code, 
+            course_name, 
+            phase, 
+            phase_is_mandatory, 
+            summary_nl, 
+            summary_en, semester, learning_contents_nl, learning_contents_en, 
+            learning_track_id, programme, language, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            original_course["z_code"] + "_pending", 
+            original_course["course_name"], 
+            original_course["phase"], 
+            original_course["phase_is_mandatory"], 
+            course.summary, 
+            course.summaryEnglish, 
+            original_course["semester"], 
+            original_course["learning_contents_nl"], 
+            "",
+            original_course["learning_track_id"], 
+            original_course["programme"], 
+            original_course["language"],
+            "PENDING"
+        ))
+        course_id = cursor.lastrowid
+
+
+    # # Insert objectives
+    # for obj in course.objectives:
+    #     cursor.execute("""
+    #         INSERT INTO course_objectives (course_id, lang, objective)
+    #         VALUES (?, 'nl', ?)
+    #     """, (course_id, obj.nl))
+
+    #     cursor.execute("""
+    #         INSERT INTO course_objectives (course_id, lang, objective)
+    #         VALUES (?, 'en', ?)
+    #     """, (course_id, obj.en))
+
+    # # Insert tags
+    # for tag in course.tags:
+    #     cursor.execute("""
+    #         INSERT INTO course_tags (course_id, tag)
+    #         VALUES (?, ?)
+    #     """, (course_id, tag))
+
+    # Commit and close
+    conn.commit()
+    conn.close()
+
 @app.get("/courses")
 async def get_all_courses():
     try:
@@ -142,5 +226,13 @@ async def get_all_profiles():
     try:
         profiles = get_profiles()
         return JSONResponse(content=profiles, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.post("/add_course/")
+async def add_course(course: Course):
+    try:
+        insert_course(course)
+        return JSONResponse(content="Course added successfully", status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
