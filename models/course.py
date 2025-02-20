@@ -11,3 +11,4 @@ class Course(BaseModel):
     summaryEnglish: str
     objectives: List[Objective]  # List of Objective instances
     tags: List[str]
+    credits: int

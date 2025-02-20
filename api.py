@@ -143,11 +143,12 @@ def insert_course(course: Course):
         # If a duplicate course with status PENDING exists, UPDATE the course record
         cursor.execute("""
             UPDATE courses 
-            SET summary_nl = ?, summary_en = ?
+            SET summary_nl = ?, summary_en = ?, credits = ?
             WHERE z_code = ?
         """, (
             course.summary, 
             course.summaryEnglish, 
+            course.credits,
             course.z_code
         ))
         course_id = existingduplicate_course["z_code"]
@@ -161,8 +162,8 @@ def insert_course(course: Course):
             phase_is_mandatory, 
             summary_nl, 
             summary_en, semester, learning_contents_nl, learning_contents_en, 
-            learning_track_id, programme, language, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            learning_track_id, programme, language, status, credits, parent_course)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             original_course["z_code"] + "_pending", 
             original_course["course_name"], 
@@ -176,6 +177,8 @@ def insert_course(course: Course):
             original_course["learning_track_id"], 
             original_course["programme"], 
             original_course["language"],
+            original_course["credits"],
+            original_course["parent_course"],
             "PENDING"
         ))
         course_id = original_course["z_code"] + "_pending"
