@@ -23,7 +23,7 @@ app.add_middleware(
 )
 
 
-# Function to fetch courses with objectives
+# Function to fetch courses with objectives and child courses
 def get_courses_with_objectives():
     connection = sqlite3.connect("courses.db")
     connection.row_factory = sqlite3.Row  # Access rows as dictionaries
@@ -66,16 +66,26 @@ def get_courses_with_objectives():
             tags_by_course[course_z_code] = []
         tags_by_course[course_z_code].append(tag["name"])  # Only include name
 
-    # Combine course data with objectives
-    courses_with_objectives_tags = []
-    for course in courses:
-        course_dict = dict(course)  # Convert SQLite Row to dictionary
-        course_dict["objectives"] = objectives_by_course.get(course["z_code"], [])  # Default to empty list
-        course_dict["tags"] = tags_by_course.get(course["z_code"], [])  # Default to empty list
-        courses_with_objectives_tags.append(course_dict)
+    # Create a mapping of z_code to course data
+    courses_dict = {course["z_code"]: dict(course) for course in courses}
+
+    # Process each course and add objectives, tags, and child courses
+    for course in courses_dict.values():
+        course["objectives"] = objectives_by_course.get(course["z_code"], [])  # Default to empty list
+        course["tags"] = tags_by_course.get(course["z_code"], [])  # Default to empty list
+        course["childs"] = []  # Initialize child courses list
+
+    # Assign child courses to parents
+    for course in courses_dict.values():
+        parent_course_str = course.get("parent_course")
+        if parent_course_str:
+            parent_z_codes = [z.strip() for z in parent_course_str.split(",") if z.strip()]
+            for parent_z_code in parent_z_codes:
+                if parent_z_code in courses_dict:
+                    courses_dict[parent_z_code]["childs"].append(course)
 
     connection.close()
-    return courses_with_objectives_tags
+    return list(courses_dict.values())  # Convert back to list
 
 
 # Function to fetch tags
