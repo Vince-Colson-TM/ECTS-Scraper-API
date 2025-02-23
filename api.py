@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 from models.course import Course
+from models.verification import Verification
 
 app = FastAPI()
 
@@ -172,7 +173,7 @@ def insert_course(course: Course):
             phase_is_mandatory, 
             summary_nl, 
             summary_en, semester, learning_contents_nl, learning_contents_en, 
-            learning_track_id, programme, language, status, credits, parent_course)
+            learning_track_id, programme, language, credits, parent_course, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             original_course["z_code"] + "_pending", 
@@ -259,3 +260,85 @@ async def add_course(course: Course):
         return JSONResponse(content="Course added successfully", status_code=200)
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+    
+@app.post("/verification")
+async def verify(request: Verification):
+    # Hier kan je de validatie en logica toevoegen
+    if request.key == "9f7a3c5d1e8b6f02c4a9d7e3b5f1c8a0":
+        # Migration van pending naar real course
+        # Check of de z_code eindigt op "_pending"
+        if not request.z_code.endswith("_pending"):
+            return {"status": "error", "message": "Course not migrateable"}
+
+        # Bepaal de echte course z_code (zonder '_pending')
+        real_z_code = request.z_code.replace("_pending", "")
+
+        connection = sqlite3.connect("courses.db")
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+
+        # Haal de pending course op
+        cursor.execute("SELECT * FROM courses WHERE z_code = ?", (request.z_code,))
+        pending_course = cursor.fetchone()
+
+        if not pending_course:
+            connection.close()
+            return {"status": "error", "message": "Pending course niet gevonden."}
+
+        # Check of de echte course al bestaat
+        cursor.execute("SELECT * FROM courses WHERE z_code = ?", (real_z_code,))
+        real_course = cursor.fetchone()
+
+        if not real_course:
+            connection.close()
+            return {"status": "error", "message": "Echte course niet gevonden."}
+
+        # Update de echte course met gegevens van de pending course
+        cursor.execute("""
+            UPDATE courses 
+            SET summary_nl = ?, summary_en = ?, credits = ?
+            WHERE z_code = ?
+        """, (pending_course["summary_nl"], pending_course["summary_en"], 
+            pending_course["credits"], real_z_code))
+
+        # Haal alle objectives van de pending course op
+        cursor.execute("SELECT * FROM objectives WHERE course_z_code = ?", (request.z_code,))
+        objectives = cursor.fetchall()
+        
+        # Verwijder eerst alle objectives van de echte course
+        cursor.execute("DELETE FROM objectives WHERE course_z_code = ?", (real_z_code,))
+
+        # Zet de objectives over naar de echte course
+        for obj in objectives:
+            cursor.execute("""
+                INSERT INTO objectives (course_z_code, objective_text_nl, objective_text_en)
+                VALUES (?, ?, ?)
+            """, (real_z_code, obj["objective_text_nl"], obj["objective_text_en"]))
+            
+        # Verwijder eerst alle tags van de echte course
+        cursor.execute("DELETE FROM course_tag WHERE course_z_code = ?", (real_z_code,))
+
+        # Haal alle tags van de pending course op
+        cursor.execute("SELECT * FROM course_tag WHERE course_z_code = ?", (request.z_code,))
+        tags = cursor.fetchall()
+    
+        # Zet de tags over naar de echte course
+        for tag in tags:
+            cursor.execute("""
+                INSERT INTO course_tag (course_z_code, tag_id)
+                VALUES (?, ?)
+            """, (real_z_code, tag["tag_id"]))
+
+
+        # Pas status pending course aan, zodat we hem niet meer zien, tenzij we dat echt willen
+        cursor.execute("""
+            UPDATE courses 
+            SET status = 'ARCHIVED'
+            WHERE z_code = ?
+        """, (request.z_code,))
+
+        connection.commit()
+        connection.close()
+
+        return {"message": "Verification gelukt!"}  
+    return {"status": "error", "message": "Invalid credentials"}
